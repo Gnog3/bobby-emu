@@ -41,7 +41,10 @@ impl Memory {
         let size = osize as usize;
 
         // assert_eq!(addr % size, 0, "Invalid alignment for read mem operation");
-        assert!(addr + size <= self.vec.len(), "read is out of range, address: {addr:#x}, size: {size}");
+        assert!(
+            addr + size <= self.vec.len(),
+            "read is out of range, address: {addr:#x}, size: {size}"
+        );
 
         match osize {
             MemAccessSize::Byte => self.vec[addr].into(),

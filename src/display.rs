@@ -113,7 +113,7 @@ pub fn update_frame(frame: &mut [u8], recv: &Receiver<DisplayEvent>) {
                         set_color(pixel, color);
                     }
                 }
-            },
+            }
             DisplayEvent::Copy { .. } => todo!(),
             DisplayEvent::Floodfill { color } => {
                 for pixel in frame.chunks_exact_mut(4) {

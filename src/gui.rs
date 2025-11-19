@@ -7,7 +7,7 @@ use std::{
 use crossterm::event::{self, Event, KeyCode, KeyEvent, poll};
 use ratatui::{Frame, text::Text, widgets::Block};
 
-use crate::{cpu::Cpu, debug_display::DebugDisplay, heap::Heap};
+use crate::{cpu_thread::cpu::Cpu, debug_display::DebugDisplay, heap::Heap};
 
 pub struct Gui {
     pub debug_display: DebugDisplay,

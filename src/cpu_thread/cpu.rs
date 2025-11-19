@@ -1,11 +1,11 @@
 use anyhow::{Result, bail};
 use fps_counter::FPSCounter;
 
-use crate::{
-    csrs::Csrs,
+use super::{
     instruction_formats::{BType, IType, JType, RType, SType, UType},
     memory::{MemAccessSize, Memory},
 };
+use crate::csrs::Csrs;
 
 pub struct Cpu {
     pub registers: [u32; 32],

@@ -1,5 +1,4 @@
 pub mod character_printer;
-pub mod cpu;
 pub mod cpu_thread;
 pub mod csrs;
 pub mod ddi;
@@ -7,8 +6,6 @@ pub mod debug_display;
 pub mod display;
 pub mod gui;
 pub mod heap;
-pub mod instruction_formats;
-pub mod memory;
 pub mod keyboard;
 
 use std::sync::{
@@ -18,7 +15,7 @@ use std::sync::{
 };
 
 use character_printer::CharacterPrinterCsr;
-use cpu::Cpu;
+use cpu_thread::cpu::Cpu;
 use csrs::Csrs;
 use ddi::DdiCsr;
 use debug_display::{DebugDisplay, DebugDisplayCsr};

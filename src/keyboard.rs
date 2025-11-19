@@ -1,6 +1,9 @@
 use std::sync::mpsc::Receiver;
 
-use winit::{event::{ElementState, KeyEvent}, keyboard::{KeyCode, PhysicalKey}};
+use winit::{
+    event::{ElementState, KeyEvent},
+    keyboard::{KeyCode, PhysicalKey},
+};
 
 use crate::csrs::Csr;
 

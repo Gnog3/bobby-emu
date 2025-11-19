@@ -1,13 +1,19 @@
+pub mod cpu;
+mod instruction_formats;
+mod memory;
+
 use std::{
     sync::{
-        atomic::{AtomicBool, Ordering}, Arc, Mutex
+        Arc, Mutex,
+        atomic::{AtomicBool, Ordering},
     },
-    thread::JoinHandle, time::Duration,
+    thread::JoinHandle,
+    time::Duration,
 };
 
 use anyhow::Result;
 
-use crate::cpu::Cpu;
+use crate::cpu_thread::cpu::Cpu;
 
 pub static STOP: AtomicBool = AtomicBool::new(false);
 

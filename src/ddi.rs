@@ -55,13 +55,16 @@ impl Csr for DdiCsr {
                 .send(DisplayEvent::Floodfill { color: self.color })
                 .unwrap(),
             1058 => bail!("ddi copy not implemented"),
-            1059 => self.send.send(DisplayEvent::Rectangle {
-                target_x: (self.target & 0xFFFF) as u16,
-                target_y: (self.target >> 16) as u16,
-                size_x: (self.size & 0xFFFF) as u16,
-                size_y: (self.size >> 16) as u16,
-                color: self.color,
-            }).unwrap(),
+            1059 => self
+                .send
+                .send(DisplayEvent::Rectangle {
+                    target_x: (self.target & 0xFFFF) as u16,
+                    target_y: (self.target >> 16) as u16,
+                    size_x: (self.size & 0xFFFF) as u16,
+                    size_y: (self.size >> 16) as u16,
+                    color: self.color,
+                })
+                .unwrap(),
             _ => unreachable!(),
         }
         Ok(())
