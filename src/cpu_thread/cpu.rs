@@ -12,7 +12,7 @@ pub struct Cpu {
     pub pc: u32,
     pub csrs: Csrs,
     pub mem: Memory,
-    pub insn_count: u32,
+    pub insn_count: u64,
     pub fps_counter: FPSCounter,
     pub fps: usize,
 }
@@ -77,7 +77,9 @@ impl Cpu {
             _ => bail!("invalid opcode: {}", opcode),
         }
         self.insn_count += 1;
-        self.fps = self.fps_counter.tick();
+        if self.insn_count % 512 == 0 {
+            self.fps = self.fps_counter.tick() * 512;
+        }
         Ok(())
     }
 

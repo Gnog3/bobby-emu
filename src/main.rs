@@ -83,18 +83,16 @@ fn main() {
         cpu.flash(&data);
     }
 
-    let cpu = Arc::new(Mutex::new(cpu));
-    let cpu_handle = cpu_thread::run(Arc::clone(&cpu));
+    let cpu_handle = cpu_thread::run(cpu);
 
     let gui = Gui {
         debug_display,
-        cpu,
         heap,
     };
     let gui_handle = gui::run(gui);
     //gui_handle.join().unwrap();
     display::run(display, keyboard);
-    cpu_thread::STOP.store(true, Ordering::SeqCst);
+    cpu_thread::STOP_THREAD.store(true, Ordering::SeqCst);
     gui_handle.join().unwrap();
     if let Err(err) = cpu_handle.join().unwrap() {
         println!("Err: {:?}", err);
