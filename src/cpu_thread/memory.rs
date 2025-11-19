@@ -1,3 +1,5 @@
+use anyhow::{Result, bail};
+
 /// The different sizes used for memory accesses
 #[derive(Clone, Copy)]
 #[repr(usize)]
@@ -10,21 +12,6 @@ pub enum MemAccessSize {
     Word = 4,
 }
 
-/// A trait for objects which implement memory operations
-// pub trait Memory {
-//     /// Read `size` bytes from `addr`.
-//     ///
-//     /// `addr` must be aligned to `size`.
-//     /// Returns `None` if `addr` doesn't exist in this memory.
-//     fn read_mem(&mut self, addr: u32, size: MemAccessSize) -> Option<u32>;
-
-//     /// Write `size` bytes of `store_data` to `addr`
-//     ///
-//     /// `addr` must be aligned to `size`.
-//     /// Returns `true` if write succeeds.
-//     fn write_mem(&mut self, addr: u32, size: MemAccessSize, store_data: u32) -> bool;
-// }
-
 pub struct Memory {
     pub vec: Vec<u8>,
 }
@@ -36,17 +23,19 @@ impl Memory {
         Self { vec: vec![0; size] }
     }
 
-    pub fn read(&self, addr: u32, osize: MemAccessSize) -> u32 {
+    pub fn read(&self, addr: u32, osize: MemAccessSize) -> Result<u32> {
         let addr = addr as usize;
         let size = osize as usize;
 
-        // assert_eq!(addr % size, 0, "Invalid alignment for read mem operation");
-        assert!(
-            addr + size <= self.vec.len(),
-            "read is out of range, address: {addr:#x}, size: {size}"
-        );
+        // if addr % size != 0 {
+        //     bail!("[memory] read with invalid alignment, address: {addr:#x}, size: {size}");
+        // }
 
-        match osize {
+        if addr + size > self.vec.len() {
+            bail!("[memory] read is out of range, address: {addr:#x}, size: {size}");
+        }
+
+        Ok(match osize {
             MemAccessSize::Byte => self.vec[addr].into(),
             MemAccessSize::HalfWord => {
                 u16::from_le_bytes(self.vec[addr..addr + size].try_into().unwrap()).into()
@@ -54,17 +43,25 @@ impl Memory {
             MemAccessSize::Word => {
                 u32::from_le_bytes(self.vec[addr..addr + size].try_into().unwrap())
             }
-        }
+        })
     }
 
-    pub fn write(&mut self, addr: u32, osize: MemAccessSize, data: u32) {
+    pub fn write(&mut self, addr: u32, osize: MemAccessSize, data: u32) -> Result<()> {
         let addr = addr as usize;
         let size = osize as usize;
 
-        assert_eq!(addr % size, 0, "Invalid alignment for write mem operation");
-        assert!(addr + size <= self.vec.len(), "write is out of range");
+        // if addr % size != 0 {
+        //     bail!("[memory] write with invalid alignment, address: {addr:#x}, size: {size}");
+        // }
+
+        if addr + size > self.vec.len() {
+            bail!("[memory] write is out of range, address: {addr:#x}, size: {size}");
+        }
+
         let data = data.to_le_bytes();
         self.vec[addr..addr + size].copy_from_slice(&data[..size]);
+
+        Ok(())
     }
 
     pub fn flash(&mut self, data: &[u8]) {

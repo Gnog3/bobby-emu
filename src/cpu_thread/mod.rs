@@ -4,7 +4,7 @@ mod memory;
 
 use std::{
     sync::{
-        Arc, Mutex,
+        Mutex,
         atomic::{AtomicBool, Ordering},
     },
     thread::JoinHandle,

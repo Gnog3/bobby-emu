@@ -61,7 +61,7 @@ impl Cpu {
     }
 
     pub fn tick(&mut self) -> Result<()> {
-        let insn = self.mem.read(self.pc, MemAccessSize::Word);
+        let insn = self.mem.read(self.pc, MemAccessSize::Word)?;
         let opcode = insn & 0x7F;
         match opcode {
             0b0110111 => self.lui(insn.into()),
@@ -74,7 +74,7 @@ impl Cpu {
             0b0010011 => self.alu_imm(insn.into())?,
             0b0110011 => self.alu(insn.into())?,
             0b1110011 => self.csr(insn.into())?,
-            _ => bail!("invalid opcode: {}", opcode),
+            _ => bail!("[invalid instruction] invalid opcode: {}", opcode),
         }
         self.insn_count += 1;
         if self.insn_count % 512 == 0 {
@@ -101,7 +101,10 @@ impl Cpu {
 
     fn jalr(&mut self, insn: IType) -> Result<()> {
         if insn.funct3 != 0 {
-            bail!("invalid funct3 in jalr: {}", insn.funct3);
+            bail!(
+                "[invalid instruction] invalid funct3 in jalr: {}",
+                insn.funct3
+            );
         }
         let target = self.read_register(insn.rs1).wrapping_add(insn.imm as u32) & !1;
         self.write_register(insn.rd, self.pc + 4);
@@ -119,7 +122,10 @@ impl Cpu {
             0b101 => (l as i32) >= (r as i32),
             0b110 => l < r,
             0b111 => l >= r,
-            _ => bail!("invalid funct3 in branch: {}", insn.funct3),
+            _ => bail!(
+                "[invalid instruction] invalid funct3 in branch: {}",
+                insn.funct3
+            ),
         };
         if do_branch {
             self.pc = self.pc.wrapping_add(insn.imm as u32);
@@ -136,10 +142,13 @@ impl Cpu {
             0b010 => MemAccessSize::Word,
             0b100 => MemAccessSize::Byte,
             0b101 => MemAccessSize::HalfWord,
-            _ => bail!("invalid funct3 in load: {}", insn.funct3),
+            _ => bail!(
+                "[invalid instruction] invalid funct3 in load: {}",
+                insn.funct3
+            ),
         };
         let addr = self.read_register(insn.rs1).wrapping_add(insn.imm as u32);
-        let data = self.mem.read(addr, size);
+        let data = self.mem.read(addr, size)?;
         let data = match insn.funct3 {
             0b000 => data as i8 as i32 as u32,
             0b001 => data as i16 as i32 as u32,
@@ -157,9 +166,12 @@ impl Cpu {
             0b000 => MemAccessSize::Byte,
             0b001 => MemAccessSize::HalfWord,
             0b010 => MemAccessSize::Word,
-            _ => bail!("invalid funct3 in store: {}", insn.funct3),
+            _ => bail!(
+                "[invalid instruction] invalid funct3 in store: {}",
+                insn.funct3
+            ),
         };
-        self.mem.write(addr, size, data);
+        self.mem.write(addr, size, data)?;
         self.pc += 4;
         Ok(())
     }
@@ -176,7 +188,7 @@ impl Cpu {
             0b001 => {
                 let (shamt, flag) = shamt(insn)?;
                 if flag {
-                    bail!("flag mustn't be set")
+                    bail!("[invalid instruction] flag mustn't be set")
                 }
                 data << shamt
             }
@@ -209,7 +221,11 @@ impl Cpu {
             (0b101, 0b100000) => ((l as i32) >> (r as i32 & 0b11111)) as u32,
             (0b110, 0) => l | r,
             (0b111, 0) => l & r,
-            _ => bail!("invalid funct in alu: {} {}", insn.funct3, insn.funct7),
+            _ => bail!(
+                "[invalid instruction] invalid funct in alu: {} {}",
+                insn.funct3,
+                insn.funct7
+            ),
         };
         self.write_register(insn.rd, result);
         self.pc += 4;
@@ -219,7 +235,10 @@ impl Cpu {
     fn csr(&mut self, insn: IType) -> Result<()> {
         let csr = insn.imm as u32 & 0xFFF;
         if insn.funct3 != 0b001 {
-            bail!("invalid funct in csr: {}", insn.funct3);
+            bail!(
+                "[invalid instruction] invalid funct in csr: {}",
+                insn.funct3
+            );
         }
         let to_write = self.read_register(insn.rs1);
         let data = if insn.rd != 0 { self.read_csr(csr)? } else { 0 };
@@ -235,7 +254,10 @@ fn shamt(insn: IType) -> Result<(u32, bool)> {
     let flag = match insn.imm as u32 >> 5 {
         0 => false,
         0b100000 => true,
-        _ => bail!("invalid flag: {}", insn.imm as u32 >> 5),
+        _ => bail!(
+            "[invalid instruction] invalid flag: {}",
+            insn.imm as u32 >> 5
+        ),
     };
     Ok((shamt, flag))
 }
