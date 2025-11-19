@@ -8,11 +8,7 @@ pub mod gui;
 pub mod heap;
 pub mod keyboard;
 
-use std::sync::{
-    Arc, Mutex,
-    atomic::{AtomicU32, Ordering},
-    mpsc::channel,
-};
+use std::sync::{Arc, Mutex, atomic::AtomicU32, mpsc::channel};
 
 use character_printer::CharacterPrinterCsr;
 use cpu_thread::cpu::Cpu;
@@ -24,6 +20,8 @@ use heap::{Heap, HeapCsr};
 
 use clap::Parser;
 use keyboard::KeyboardCsr;
+
+use crate::cpu_thread::CpuHandle;
 
 #[derive(Parser)]
 struct Args {
@@ -83,18 +81,24 @@ fn main() {
         cpu.flash(&data);
     }
 
-    let cpu_handle = cpu_thread::run(cpu);
+    let cpu_handle = {
+        let mut cpu_handle = CpuHandle::new(cpu);
+        cpu_handle.start();
+        Arc::new(Mutex::new(cpu_handle))
+    };
 
     let gui = Gui {
         debug_display,
         heap,
+        cpu_handle: Arc::clone(&cpu_handle),
     };
     let gui_handle = gui::run(gui);
     //gui_handle.join().unwrap();
     display::run(display, keyboard);
-    cpu_thread::STOP_THREAD.store(true, Ordering::SeqCst);
+    cpu_handle.lock().unwrap().request_stop();
+
     gui_handle.join().unwrap();
-    if let Err(err) = cpu_handle.join().unwrap() {
+    if let Err(err) = cpu_handle.lock().unwrap().stop() {
         println!("Err: {:?}", err);
     }
 }

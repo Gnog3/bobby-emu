@@ -1,5 +1,5 @@
 use std::{
-    sync::{Arc, Mutex, atomic::Ordering},
+    sync::{Arc, Mutex},
     thread::JoinHandle,
     time::Duration,
 };
@@ -7,11 +7,12 @@ use std::{
 use crossterm::event::{self, Event, KeyCode, KeyEvent, poll};
 use ratatui::{Frame, text::Text, widgets::Block};
 
-use crate::{cpu_thread, debug_display::DebugDisplay, heap::Heap};
+use crate::{cpu_thread::CpuHandle, debug_display::DebugDisplay, heap::Heap};
 
 pub struct Gui {
     pub debug_display: DebugDisplay,
     pub heap: Heap,
+    pub cpu_handle: Arc<Mutex<CpuHandle>>,
 }
 
 pub fn run(gui: Gui) -> JoinHandle<()> {
@@ -54,9 +55,11 @@ fn registers(frame: &mut Frame<'_>, gui: &Gui) {
     area.height = REGISTERS_HEIGHT;
     let block = Block::bordered().title("Registers");
 
-    cpu_thread::REQUEST_UPDATE.store(true, Ordering::SeqCst);
-
-    let cpu = *cpu_thread::CPU_STATE.lock().unwrap();
+    let cpu = {
+        let cpu = gui.cpu_handle.lock().unwrap();
+        cpu.request_update();
+        cpu.get_state()
+    };
 
     for i in 0..32 {
         let text = Text::raw(format!("x{:<3} 0x{:08X}", i, cpu.registers[i]));
